@@ -1,0 +1,105 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Models\VisitorAnalytic;
+use App\Models\CityStat;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class VisitorAnalyticController
+{
+    /**
+     * Track visitor analytics (public)
+     */
+    public function track(Request $request)
+    {
+        $validated = $request->validate([
+            'page_viewed' => 'required|string|max:255',
+            'product_id' => 'nullable|uuid|exists:products,id',
+            'session_id' => 'nullable|string|max:255',
+            'visitor_city' => 'nullable|string|max:255',
+            'visitor_province' => 'nullable|string|max:255',
+            'referrer_url' => 'nullable|url',
+        ]);
+
+        // Create analytics record
+        VisitorAnalytic::create([
+            'visit_date' => today(),
+            'visitor_ip' => $request->ip(),
+            'visitor_city' => $validated['visitor_city'],
+            'visitor_province' => $validated['visitor_province'],
+            'visitor_country' => 'Indonesia',
+            'page_viewed' => $validated['page_viewed'],
+            'product_id' => $validated['product_id'],
+            'referrer_url' => $validated['referrer_url'],
+            'user_agent' => $request->userAgent(),
+            'session_id' => $validated['session_id'],
+            'created_at' => now(),
+        ]);
+
+        // Update city stats if city is provided
+        if ($validated['visitor_city']) {
+            $this->updateCityStats($validated['visitor_city'], $validated['visitor_province']);
+        }
+
+        return response()->json(['message' => 'Kunjungan berhasil dicatat'], 201);
+    }
+
+    /**
+     * Get analytics summary (admin)
+     */
+    public function index(Request $request)
+    {
+        $days = $request->integer('days', 30);
+        $from = now()->subDays($days);
+
+        $totalVisits = VisitorAnalytic::where('created_at', '>=', $from)->count();
+        $uniqueCities = VisitorAnalytic::where('created_at', '>=', $from)
+            ->select('visitor_city')
+            ->distinct()
+            ->count();
+
+        $topPages = VisitorAnalytic::where('created_at', '>=', $from)
+            ->select('page_viewed', DB::raw('count(*) as visits'))
+            ->groupBy('page_viewed')
+            ->orderByDesc('visits')
+            ->limit(10)
+            ->get();
+
+        $topCities = VisitorAnalytic::where('created_at', '>=', $from)
+            ->select('visitor_city', DB::raw('count(*) as visits'))
+            ->groupBy('visitor_city')
+            ->orderByDesc('visits')
+            ->limit(10)
+            ->get();
+
+        $dailyVisits = VisitorAnalytic::where('created_at', '>=', $from)
+            ->select('visit_date', DB::raw('count(*) as visits'))
+            ->groupBy('visit_date')
+            ->orderBy('visit_date')
+            ->get();
+
+        return response()->json([
+            'total_visits_period' => $totalVisits,
+            'unique_cities' => $uniqueCities,
+            'top_pages' => $topPages,
+            'top_cities' => $topCities,
+            'daily_visits' => $dailyVisits,
+        ]);
+    }
+
+    /**
+     * Update city statistics
+     */
+    protected function updateCityStats(string $city, ?string $province): void
+    {
+        $stat = CityStat::firstOrCreate(
+            ['city' => $city],
+            ['province' => $province, 'total_visitors' => 0]
+        );
+
+        $stat->increment('total_visitors');
+        $stat->update(['last_visit_date' => today()]);
+    }
+}
