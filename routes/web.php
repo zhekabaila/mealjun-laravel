@@ -3,5 +3,8 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return response([
+        "status" => 200,
+        "message" => "This is Home Page!"
+    ], 200);
 });

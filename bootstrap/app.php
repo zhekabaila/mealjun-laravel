@@ -12,8 +12,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->statefulApi();
+        // Configure middleware for API routes
+        $middleware->api(append: [
+            // Add API-specific middleware here if needed
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Handle validation exceptions for API routes
+        $exceptions->shouldRenderJsonWhen(function ($request, $e) {
+            // Always render JSON for API routes
+            if ($request->is('api/*')) {
+                return true;
+            }
+            return $request->expectsJson();
+        });
     })->create();

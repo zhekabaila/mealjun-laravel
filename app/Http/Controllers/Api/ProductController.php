@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
 use App\Services\CloudinaryService;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class ProductController
 {
+    use PaginationHelper;
+
     public function __construct(protected CloudinaryService $cloudinary) {}
 
     /**
@@ -16,17 +19,26 @@ class ProductController
      */
     public function publicIndex(Request $request)
     {
+        $limit = $request->integer('limit', 12);
         $query = Product::whereIn('stock_status', ['available', 'limited']);
 
         if ($request->has('flavor')) {
             $query->where('flavor', $request->input('flavor'));
         }
 
-        $products = $query->orderByDesc('is_featured')
-            ->orderByDesc('created_at')
-            ->paginate(12);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['name', 'flavor', 'description']);
 
-        return response()->json($products);
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderByDesc('is_featured')->orderByDesc('created_at');
+        }
+
+        $products = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($products));
     }
 
     /**
@@ -45,16 +57,26 @@ class ProductController
      */
     public function index(Request $request)
     {
+        $limit = $request->integer('limit', 15);
         $query = Product::with('creator');
 
         if ($request->has('stock_status')) {
             $query->where('stock_status', $request->input('stock_status'));
         }
 
-        $products = $query->orderByDesc('created_at')
-            ->paginate(15);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['name', 'flavor', 'description']);
 
-        return response()->json($products);
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderByDesc('created_at');
+        }
+
+        $products = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($products));
     }
 
     /**

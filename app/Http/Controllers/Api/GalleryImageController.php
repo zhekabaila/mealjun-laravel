@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\GalleryImage;
 use App\Services\CloudinaryService;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class GalleryImageController
 {
+    use PaginationHelper;
+
     public function __construct(protected CloudinaryService $cloudinary) {}
 
     /**
@@ -26,13 +29,24 @@ class GalleryImageController
     /**
      * List all gallery images (admin)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $images = GalleryImage::with('creator')
-            ->orderBy('display_order')
-            ->paginate(20);
+        $limit = $request->integer('limit', 20);
+        $query = GalleryImage::with('creator');
 
-        return response()->json($images);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['caption']);
+
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderBy('display_order');
+        }
+
+        $images = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($images));
     }
 
     /**

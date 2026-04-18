@@ -25,6 +25,10 @@ RateLimiter::for('analytics', function ($request) {
     return Limit::perMinute(30)->by($request->ip());
 });
 
+Route::get('/', function () {
+    return ["home" => "true"];
+});
+
 // Public auth routes (no middleware required)
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);

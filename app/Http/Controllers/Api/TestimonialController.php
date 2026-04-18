@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Testimonial;
 use App\Services\CloudinaryService;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class TestimonialController
 {
+    use PaginationHelper;
+
     public function __construct(protected CloudinaryService $cloudinary) {}
 
     /**
@@ -26,12 +29,24 @@ class TestimonialController
     /**
      * List all testimonials (admin)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $testimonials = Testimonial::orderByDesc('created_at')
-            ->paginate(20);
+        $limit = $request->integer('limit', 20);
+        $query = Testimonial::query();
 
-        return response()->json($testimonials);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['customer_name', 'customer_location', 'review_text']);
+
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderByDesc('created_at');
+        }
+
+        $testimonials = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($testimonials));
     }
 
     /**

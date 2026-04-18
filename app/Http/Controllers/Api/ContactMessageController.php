@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Models\ContactMessage;
 use App\Models\AboutInfo;
 use App\Services\EvolutionApiService;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class ContactMessageController
 {
+    use PaginationHelper;
+
     public function __construct(protected EvolutionApiService $evolutionApi) {}
 
     /**
@@ -49,16 +52,26 @@ class ContactMessageController
      */
     public function index(Request $request)
     {
+        $limit = $request->integer('limit', 20);
         $query = ContactMessage::query();
 
         if ($request->has('is_read')) {
             $query->where('is_read', $request->boolean('is_read'));
         }
 
-        $messages = $query->orderByDesc('created_at')
-            ->paginate(20);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['name', 'email', 'message']);
 
-        return response()->json($messages);
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderByDesc('created_at');
+        }
+
+        $messages = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($messages));
     }
 
     /**

@@ -5,21 +5,35 @@ namespace App\Http\Controllers\Api;
 use App\Models\Product;
 use App\Models\CaptionTemplate;
 use App\Models\GeneratedCaption;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class GeneratedCaptionController
 {
+    use PaginationHelper;
+
     /**
      * List generated captions by current user (admin)
      */
     public function index(Request $request)
     {
-        $captions = GeneratedCaption::where('created_by', $request->user()->id)
-            ->with('product')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+        $limit = $request->integer('limit', 20);
+        $query = GeneratedCaption::where('created_by', $request->user()->id)
+            ->with('product');
 
-        return response()->json($captions);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['product_name', 'generated_text']);
+
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderByDesc('created_at');
+        }
+
+        $captions = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($captions));
     }
 
     /**

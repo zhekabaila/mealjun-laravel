@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\StoreLocation;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class StoreLocationController
 {
+    use PaginationHelper;
+
     /**
      * List all active store locations (public)
      */
@@ -30,12 +33,24 @@ class StoreLocationController
     /**
      * List all store locations (admin)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $locations = StoreLocation::orderByDesc('created_at')
-            ->paginate(20);
+        $limit = $request->integer('limit', 20);
+        $query = StoreLocation::query();
 
-        return response()->json($locations);
+        // Apply search if value parameter is provided
+        $query = $this->applySearch($query, $request, ['store_name', 'city', 'address', 'phone']);
+
+        // Apply ordering if provided, otherwise default
+        if ($request->has('order') && $request->has('sort')) {
+            $query = $this->applyOrdering($query, $request);
+        } else {
+            $query = $query->orderByDesc('created_at');
+        }
+
+        $locations = $query->paginate($limit);
+
+        return response()->json($this->formatPagination($locations));
     }
 
     /**
