@@ -10,7 +10,6 @@ class CloudinaryService
     protected string $cloudName;
     protected string $apiKey;
     protected string $apiSecret;
-    protected string $uploadPreset;
 
     /**
      * Initialize CloudinaryService with configuration
@@ -20,11 +19,10 @@ class CloudinaryService
         $this->cloudName = config('services.cloudinary.cloud_name');
         $this->apiKey = config('services.cloudinary.api_key');
         $this->apiSecret = config('services.cloudinary.api_secret');
-        $this->uploadPreset = config('services.cloudinary.upload_preset');
     }
 
     /**
-     * Upload base64 image to Cloudinary
+     * Upload base64 image to Cloudinary (authenticated without upload preset)
      *
      * @param string $base64Image
      * @param string $folder
@@ -40,16 +38,40 @@ class CloudinaryService
         }
 
         try {
+            $timestamp = time();
+
+            // Build payload
             $payload = [
                 'file' => $base64Image,
-                'upload_preset' => $this->uploadPreset,
                 'folder' => $folder,
+                'timestamp' => $timestamp,
+                'api_key' => $this->apiKey,
             ];
 
             // Add public_id if provided
             if ($publicId !== null) {
                 $payload['public_id'] = $publicId;
             }
+
+            // Generate signature from payload parameters (excluding 'file')
+            $signatureParams = [
+                'folder' => $folder,
+                'timestamp' => $timestamp,
+            ];
+            if ($publicId !== null) {
+                $signatureParams['public_id'] = $publicId;
+            }
+
+            // Build signature string following Cloudinary format
+            // Sort params by key and build: param1=value1&param2=value2&...&api_secret
+            ksort($signatureParams);
+            $signatureParts = [];
+            foreach ($signatureParams as $key => $value) {
+                $signatureParts[] = "{$key}={$value}";
+            }
+            $signatureStr = implode('&', $signatureParts) . $this->apiSecret;
+
+            $payload['signature'] = hash('sha1', $signatureStr);
 
             $response = Http::post(
                 "https://api.cloudinary.com/v1_1/{$this->cloudName}/image/upload",

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\CaptionTemplate;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class CaptionTemplateController
 {
+    use PaginationHelper;
+
     /**
      * List all caption templates (admin)
      */
@@ -14,7 +17,7 @@ class CaptionTemplateController
     {
         $templates = CaptionTemplate::orderBy('tone')->get();
 
-        return response()->json($templates);
+        return response()->json(["data" => $templates]);
     }
 
     /**
@@ -25,12 +28,13 @@ class CaptionTemplateController
         $validated = $request->validate([
             'tone' => 'required|in:friendly,professional,playful',
             'template_text' => 'required|string',
+            'prompt' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $template = CaptionTemplate::create($validated);
 
-        return response()->json($template, 201);
+        return response()->json($this->formatResource($template), 201);
     }
 
     /**
@@ -53,12 +57,13 @@ class CaptionTemplateController
         $validated = $request->validate([
             'tone' => 'sometimes|in:friendly,professional,playful',
             'template_text' => 'sometimes|string',
+            'prompt' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $template->update($validated);
 
-        return response()->json($template);
+        return response()->json($this->formatResource($template));
     }
 
     /**

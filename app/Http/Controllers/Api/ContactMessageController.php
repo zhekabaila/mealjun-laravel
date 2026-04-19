@@ -42,8 +42,10 @@ class ContactMessageController
         }
 
         return response()->json([
-            'message' => 'Pesan Anda berhasil dikirim. Kami akan segera menghubungi Anda.',
-            'id' => $contact->id,
+            'data' => [
+                'message' => 'Pesan Anda berhasil dikirim. Kami akan segera menghubungi Anda.',
+                'id' => $contact->id,
+            ],
         ], 201);
     }
 
@@ -86,7 +88,7 @@ class ContactMessageController
             $message->update(['is_read' => true]);
         }
 
-        return response()->json($message);
+        return response()->json($this->formatResource($message));
     }
 
     /**
@@ -130,10 +132,7 @@ class ContactMessageController
             $this->evolutionApi->notifyAdmin($validated['recipient_phone'], $whatsappMessage);
         }
 
-        return response()->json([
-            'message' => 'Balasan berhasil disimpan',
-            'data' => $message,
-        ]);
+        return response()->json($this->formatResource($message));
     }
 
     /**

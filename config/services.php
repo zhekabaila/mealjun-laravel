@@ -48,4 +48,11 @@ return [
         'instance_name' => env('EVOLUTION_INSTANCE_NAME'),
     ],
 
+    'nvidia_kimi' => [
+        'api_key' => env('NVIDIA_KIMI_API_KEY'),
+        'api_url' => env('NVIDIA_KIMI_API_URL', 'https://integrate.api.nvidia.com/v1/chat/completions'),
+        'model' => env('NVIDIA_KIMI_MODEL', 'moonshotai/kimi-k2.5'),
+        'timeout' => env('NVIDIA_KIMI_TIMEOUT', 120), // Timeout dalam detik (default 120 detik = 2 menit)
+    ],
+
 ];

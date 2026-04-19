@@ -23,7 +23,7 @@ class GalleryImageController
             ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($images);
+        return response()->json(["data" => $images]);
     }
 
     /**
@@ -55,7 +55,15 @@ class GalleryImageController
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'image_base64' => 'required|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'image_base64' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'caption' => 'required|string|max:255',
             'display_order' => 'integer|min:0',
             'is_published' => 'boolean',
@@ -75,7 +83,7 @@ class GalleryImageController
             'created_by' => auth()->id(),
         ]);
 
-        return response()->json($image, 201);
+        return response()->json($this->formatResource($image), 201);
     }
 
     /**
@@ -84,7 +92,7 @@ class GalleryImageController
     public function show(string $id)
     {
         $image = GalleryImage::with('creator')->findOrFail($id);
-        return response()->json($image);
+        return response()->json($this->formatResource($image));
     }
 
     /**
@@ -95,7 +103,15 @@ class GalleryImageController
         $image = GalleryImage::findOrFail($id);
 
         $validated = $request->validate([
-            'image_base64' => 'nullable|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'image_base64' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($value && !preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'caption' => 'sometimes|string|max:255',
             'display_order' => 'sometimes|integer|min:0',
             'is_published' => 'boolean',
@@ -112,7 +128,7 @@ class GalleryImageController
 
         $image->update($validated);
 
-        return response()->json($image);
+        return response()->json($this->formatResource($image));
     }
 
     /**

@@ -12,6 +12,7 @@ class CaptionTemplate extends Model
     protected $fillable = [
         'tone',
         'template_text',
+        'prompt',
         'is_active',
     ];
 

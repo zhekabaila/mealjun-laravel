@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\AboutInfo;
 use App\Services\CloudinaryService;
+use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
 
 class AboutInfoController
 {
+    use PaginationHelper;
+
     public function __construct(protected CloudinaryService $cloudinary) {}
 
     /**
@@ -21,7 +24,7 @@ class AboutInfoController
             return response()->json(['message' => 'Data about belum tersedia'], 404);
         }
 
-        return response()->json($about);
+        return response()->json($this->formatResource($about));
     }
 
     /**
@@ -34,7 +37,15 @@ class AboutInfoController
             'description' => 'sometimes|string',
             'vision' => 'sometimes|string',
             'mission' => 'sometimes|string',
-            'image_base64' => 'nullable|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'image_base64' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($value && !preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'whatsapp_number' => 'sometimes|string|max:20',
             'email' => 'sometimes|email',
             'address' => 'sometimes|string',
@@ -72,6 +83,6 @@ class AboutInfoController
             $about = AboutInfo::create(array_merge($defaults, $validated));
         }
 
-        return response()->json($about);
+        return response()->json($this->formatResource($about));
     }
 }

@@ -23,7 +23,7 @@ class TestimonialController
             ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($testimonials);
+        return response()->json(["data" => $testimonials]);
     }
 
     /**
@@ -59,7 +59,15 @@ class TestimonialController
             'customer_location' => 'required|string|max:255',
             'rating' => 'required|integer|min:1|max:5',
             'review_text' => 'required|string',
-            'avatar_base64' => 'nullable|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'avatar_base64' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($value && !preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'is_featured' => 'boolean',
             'is_approved' => 'boolean',
         ]);
@@ -83,7 +91,7 @@ class TestimonialController
             'is_approved' => $validated['is_approved'] ?? false,
         ]);
 
-        return response()->json($testimonial, 201);
+        return response()->json($this->formatResource($testimonial), 201);
     }
 
     /**
@@ -92,7 +100,7 @@ class TestimonialController
     public function show(string $id)
     {
         $testimonial = Testimonial::findOrFail($id);
-        return response()->json($testimonial);
+        return response()->json($this->formatResource($testimonial));
     }
 
     /**
@@ -107,7 +115,15 @@ class TestimonialController
             'customer_location' => 'sometimes|string|max:255',
             'rating' => 'sometimes|integer|min:1|max:5',
             'review_text' => 'sometimes|string',
-            'avatar_base64' => 'nullable|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'avatar_base64' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($value && !preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'is_featured' => 'boolean',
             'is_approved' => 'boolean',
         ]);
@@ -123,7 +139,7 @@ class TestimonialController
 
         $testimonial->update($validated);
 
-        return response()->json($testimonial);
+        return response()->json($this->formatResource($testimonial));
     }
 
     /**

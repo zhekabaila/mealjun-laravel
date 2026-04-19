@@ -76,7 +76,7 @@ class StoreLocationController
             'created_by' => auth()->id(),
         ]);
 
-        return response()->json($location, 201);
+        return response()->json($this->formatResource($location), 201);
     }
 
     /**
@@ -85,7 +85,7 @@ class StoreLocationController
     public function show(string $id)
     {
         $location = StoreLocation::findOrFail($id);
-        return response()->json($location);
+        return response()->json($this->formatResource($location));
     }
 
     /**
@@ -110,7 +110,7 @@ class StoreLocationController
 
         $location->update($validated);
 
-        return response()->json($location);
+        return response()->json($this->formatResource($location));
     }
 
     /**

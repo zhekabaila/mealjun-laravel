@@ -7,6 +7,16 @@ use Illuminate\Pagination\LengthAwarePaginator;
 trait PaginationHelper
 {
     /**
+     * Format single resource response
+     */
+    protected function formatResource($resource): array
+    {
+        return [
+            'data' => $resource,
+        ];
+    }
+
+    /**
      * Format pagination response to custom format
      */
     protected function formatPagination(LengthAwarePaginator $paginator): array

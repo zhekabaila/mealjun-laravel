@@ -49,7 +49,7 @@ class ProductController
         $product = Product::findOrFail($id);
         $product->increment('view_count');
 
-        return response()->json($product);
+        return response()->json($this->formatResource($product));
     }
 
     /**
@@ -89,7 +89,15 @@ class ProductController
             'flavor' => 'required|string|max:100',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'image_base64' => 'required|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'image_base64' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'shopee_link' => 'nullable|url',
             'tiktok_link' => 'nullable|url',
             'whatsapp_link' => 'nullable|url',
@@ -117,7 +125,7 @@ class ProductController
             'created_by' => auth()->id(),
         ]);
 
-        return response()->json($product, 201);
+        return response()->json($this->formatResource($product), 201);
     }
 
     /**
@@ -126,7 +134,7 @@ class ProductController
     public function show(string $id)
     {
         $product = Product::with('creator')->findOrFail($id);
-        return response()->json($product);
+        return response()->json($this->formatResource($product));
     }
 
     /**
@@ -141,7 +149,15 @@ class ProductController
             'flavor' => 'sometimes|string|max:100',
             'description' => 'sometimes|string',
             'price' => 'sometimes|numeric|min:0',
-            'image_base64' => 'nullable|string|regex:/^data:image\/(jpeg|png|webp|gif);base64,/',
+            'image_base64' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if ($value && !preg_match('/^data:image\\/(jpeg|png|webp|gif);base64,/', $value)) {
+                        $fail('The ' . $attribute . ' must be a valid base64 image (jpeg, png, webp, or gif).');
+                    }
+                },
+            ],
             'shopee_link' => 'nullable|url',
             'tiktok_link' => 'nullable|url',
             'whatsapp_link' => 'nullable|url',
