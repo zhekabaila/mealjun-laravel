@@ -22,7 +22,7 @@ class AboutInfoSeeder extends Seeder
             'vision' => 'Menjadi pilihan utama untuk produk kue dan pastry berkualitas tinggi di seluruh Indonesia, dengan standar rasa dan kualitas yang konsisten.',
             'mission' => 'Memberikan produk kue terbaik dengan harga terjangkau, menggunakan bahan berkualitas tinggi, dan memberikan pelayanan terbaik kepada setiap pelanggan setia kami.',
             'image_url' => $imageUrl,
-            'whatsapp_number' => '628123456789',
+            'whatsapp_number' => '6281313747177',
             'email' => 'info@mealjun.com',
             'address' => 'Jl. Sudirman No. 123, Jakarta Pusat, DKI Jakarta 12190',
             'updated_by' => $admin->id,

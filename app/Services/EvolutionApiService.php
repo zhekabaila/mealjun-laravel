@@ -23,30 +23,51 @@ class EvolutionApiService
     }
 
     /**
-     * Check validity of WhatsApp numbers
+     * Check validity of a WhatsApp number
      *
-     * @param array $numbers
-     * @return array
-     * @throws Exception
+     * @param string $number Single phone number to check
+     * @return array|null Returns array with keys: exists, jid, name, number. Null if check fails.
+     *                    Example: ["exists" => true, "jid" => "6281313747177@s.whatsapp.net", "name" => "jek", "number" => "6281313747177"]
      */
-    public function checkWhatsappNumbers(array $numbers): array
+    public function checkWhatsappNumbers(string $number): array|null
     {
         try {
+            // Format the number first
+            $formattedNumber = $this->formatNumber($number);
+
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'apikey' => $this->apiKey,
             ])->post(
                 "{$this->baseUrl}/chat/whatsappNumbers/{$this->instanceName}",
-                ['numbers' => $numbers]
+                ['numbers' => [$formattedNumber]]
             );
 
             if ($response->failed()) {
                 throw new Exception('Evolution API check failed: ' . $response->body());
             }
 
-            return $response->json();
+            // API returns array of objects, get the first one
+            $responseData = $response->json();
+            
+            if (empty($responseData)) {
+                return null;
+            }
+
+            // Convert to associative array if it's an object
+            $result = (array) $responseData[0];
+
+            return [
+                'exists' => $result['exists'] ?? false,
+                'jid' => $result['jid'] ?? null,
+                'name' => $result['name'] ?? null,
+                'number' => $result['number'] ?? null,
+            ];
         } catch (Exception $e) {
-            throw new Exception('WhatsApp number check error: ' . $e->getMessage());
+            Log::error('WhatsApp number check error: ' . $e->getMessage(), [
+                'phone_number' => $number,
+            ]);
+            return null;
         }
     }
 
@@ -111,20 +132,17 @@ class EvolutionApiService
     public function notifyAdmin(string $adminNumber, string $message): bool
     {
         try {
-            // Format the number
-            $formattedNumber = $this->formatNumber($adminNumber);
-
-            // Check validity
-            $checkResult = $this->checkWhatsappNumbers([$formattedNumber]);
+            // Check validity - returns array or null
+            $checkResult = $this->checkWhatsappNumbers($adminNumber);
 
             // Verify number exists in response
-            if (!isset($checkResult['numberExists']) || !$checkResult['numberExists']) {
-                Log::warning("WhatsApp number validation failed for: {$formattedNumber}");
+            if (!$checkResult || !$checkResult['exists']) {
+                Log::warning("WhatsApp number validation failed for: {$adminNumber}");
                 return false;
             }
 
-            // Send message
-            $this->sendText($formattedNumber, $message);
+            // Send message using the formatted number
+            $this->sendText($checkResult['number'], $message);
 
             return true;
         } catch (Exception $e) {

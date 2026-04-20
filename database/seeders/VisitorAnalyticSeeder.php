@@ -25,26 +25,9 @@ class VisitorAnalyticSeeder extends Seeder
             ['city' => 'Denpasar', 'province' => 'Bali'],
         ];
 
-        $pages = [
-            'homepage',
-            'products',
-            'product_detail',
-            'testimonials',
-            'gallery',
-            'about',
-            'contact',
-            'store_locations',
-        ];
-
         // Generate 200 visitor analytics records
         for ($i = 0; $i < 200; $i++) {
             $city = $cities[array_rand($cities)];
-            $page = $pages[array_rand($pages)];
-            $productId = null;
-
-            if ($page === 'product_detail') {
-                $productId = $products->random()->id;
-            }
 
             VisitorAnalytic::create([
                 'visit_date' => now()->subDays(rand(0, 30)),
@@ -52,11 +35,6 @@ class VisitorAnalyticSeeder extends Seeder
                 'visitor_city' => $city['city'],
                 'visitor_province' => $city['province'],
                 'visitor_country' => 'Indonesia',
-                'page_viewed' => $page,
-                'product_id' => $productId,
-                'referrer_url' => rand(0, 1) === 1 ? fake()->url() : null,
-                'user_agent' => fake()->userAgent(),
-                'session_id' => fake()->uuid(),
                 'created_at' => now()->subDays(rand(0, 30)),
             ]);
         }

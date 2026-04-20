@@ -13,7 +13,7 @@ class ContactMessage extends Model
 
     protected $fillable = [
         'name',
-        'email',
+        'phone_number',
         'message',
         'is_read',
         'replied_at',

@@ -92,11 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Gallery
     Route::post('/gallery', [GalleryImageController::class, 'store']);
     Route::get('/gallery', [GalleryImageController::class, 'index']);
+    Route::patch('/gallery/reorder', [GalleryImageController::class, 'reorder']);
     Route::get('/gallery/{id}', [GalleryImageController::class, 'show']);
     Route::put('/gallery/{id}', [GalleryImageController::class, 'update']);
     Route::patch('/gallery/{id}', [GalleryImageController::class, 'update']);
     Route::delete('/gallery/{id}', [GalleryImageController::class, 'destroy']);
-    Route::patch('/gallery/reorder', [GalleryImageController::class, 'reorder']);
 
     // About Info
     Route::put('/about', [AboutInfoController::class, 'update']);

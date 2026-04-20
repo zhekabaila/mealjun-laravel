@@ -15,12 +15,9 @@ class VisitorAnalyticController
     public function track(Request $request)
     {
         $validated = $request->validate([
-            'page_viewed' => 'required|string|max:255',
-            'product_id' => 'nullable|uuid|exists:products,id',
-            'session_id' => 'nullable|string|max:255',
             'visitor_city' => 'nullable|string|max:255',
             'visitor_province' => 'nullable|string|max:255',
-            'referrer_url' => 'nullable|url',
+            'visitor_country' => 'nullable|string|max:255',
         ]);
 
         // Create analytics record
@@ -29,12 +26,7 @@ class VisitorAnalyticController
             'visitor_ip' => $request->ip(),
             'visitor_city' => $validated['visitor_city'],
             'visitor_province' => $validated['visitor_province'],
-            'visitor_country' => 'Indonesia',
-            'page_viewed' => $validated['page_viewed'],
-            'product_id' => $validated['product_id'],
-            'referrer_url' => $validated['referrer_url'],
-            'user_agent' => $request->userAgent(),
-            'session_id' => $validated['session_id'],
+            'visitor_country' => $validated['visitor_country'],
             'created_at' => now(),
         ]);
 
@@ -60,9 +52,9 @@ class VisitorAnalyticController
             ->distinct()
             ->count();
 
-        $topPages = VisitorAnalytic::where('created_at', '>=', $from)
-            ->select('page_viewed', DB::raw('count(*) as visits'))
-            ->groupBy('page_viewed')
+        $topCountries = VisitorAnalytic::where('created_at', '>=', $from)
+            ->select('visitor_country', DB::raw('count(*) as visits'))
+            ->groupBy('visitor_country')
             ->orderByDesc('visits')
             ->limit(10)
             ->get();
@@ -83,7 +75,7 @@ class VisitorAnalyticController
         return response()->json([
             'total_visits_period' => $totalVisits,
             'unique_cities' => $uniqueCities,
-            'top_pages' => $topPages,
+            'top_countries' => $topCountries,
             'top_cities' => $topCities,
             'daily_visits' => $dailyVisits,
         ]);

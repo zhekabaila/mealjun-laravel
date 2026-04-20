@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VisitorAnalytic extends Model
 {
@@ -19,11 +18,6 @@ class VisitorAnalytic extends Model
         'visitor_city',
         'visitor_province',
         'visitor_country',
-        'page_viewed',
-        'product_id',
-        'referrer_url',
-        'user_agent',
-        'session_id',
         'created_at',
     ];
 
@@ -31,12 +25,4 @@ class VisitorAnalytic extends Model
         'visit_date' => 'date',
         'created_at' => 'datetime',
     ];
-
-    /**
-     * Get the product associated with this analytic.
-     */
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class, 'product_id');
-    }
 }

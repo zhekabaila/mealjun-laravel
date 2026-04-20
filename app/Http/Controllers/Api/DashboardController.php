@@ -30,7 +30,7 @@ class DashboardController
 
         $recentMessages = ContactMessage::orderByDesc('created_at')
             ->limit(5)
-            ->get(['id', 'name', 'email', 'is_read', 'created_at']);
+            ->get(['id', 'name', 'phone_number', 'is_read', 'created_at']);
 
         $visitorToday = VisitorAnalytic::whereDate('created_at', today())->count();
         $visitorWeek = VisitorAnalytic::where('created_at', '>=', now()->subWeek())->count();

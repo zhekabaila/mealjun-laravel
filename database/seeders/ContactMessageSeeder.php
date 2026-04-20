@@ -15,7 +15,7 @@ class ContactMessageSeeder extends Seeder
         $messages = [
             [
                 'name' => 'Ahmad Wijaya',
-                'email' => 'ahmad.wijaya@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Halo Mealjun! Saya tertarik untuk menjadi reseller produk Mealjun. Bagaimana caranya? Apakah ada syarat dan ketentuan khusus? Mohon informasinya.',
                 'is_read' => true,
                 'replied_at' => now(),
@@ -23,7 +23,7 @@ class ContactMessageSeeder extends Seeder
             ],
             [
                 'name' => 'Siti Nurhaliza',
-                'email' => 'siti.nur@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Apakah bisa custom cake untuk acara pernikahan saya? Budget berapa ya untuk cake ukuran besar untuk 100 orang?',
                 'is_read' => true,
                 'replied_at' => now(),
@@ -31,7 +31,7 @@ class ContactMessageSeeder extends Seeder
             ],
             [
                 'name' => 'Budi Santoso',
-                'email' => 'budi.santoso@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Berapa lama estimasi pengiriman ke Bandung? Apakah ada biaya pengiriman?',
                 'is_read' => true,
                 'replied_at' => now(),
@@ -39,7 +39,7 @@ class ContactMessageSeeder extends Seeder
             ],
             [
                 'name' => 'Rina Wijaya',
-                'email' => 'rina.wijaya@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Apakah ada diskon untuk pembelian dalam jumlah besar? Saya ingin pesan 50 brownies untuk acara kantor saya.',
                 'is_read' => false,
                 'replied_at' => null,
@@ -47,7 +47,7 @@ class ContactMessageSeeder extends Seeder
             ],
             [
                 'name' => 'Dewi Putri',
-                'email' => 'dewi.putri@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Apakah produk Mealjun bisa untuk menu katering? Berapa harga per porsi?',
                 'is_read' => false,
                 'replied_at' => null,
@@ -55,7 +55,7 @@ class ContactMessageSeeder extends Seeder
             ],
             [
                 'name' => 'Roni Saputra',
-                'email' => 'roni.saputra@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Produk Anda sangat enak! Apakah bisa melayani subscription bulanan?',
                 'is_read' => true,
                 'replied_at' => now(),
@@ -63,7 +63,7 @@ class ContactMessageSeeder extends Seeder
             ],
             [
                 'name' => 'Nurul Aini',
-                'email' => 'nurul.aini@email.com',
+                'phone_number' => '6281313747177',
                 'message' => 'Apakah ada opsi pembayaran cicilan untuk pembelian kue custom?',
                 'is_read' => false,
                 'replied_at' => null,

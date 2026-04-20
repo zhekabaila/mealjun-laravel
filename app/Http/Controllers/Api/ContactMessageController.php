@@ -7,6 +7,7 @@ use App\Models\AboutInfo;
 use App\Services\EvolutionApiService;
 use App\Traits\PaginationHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ContactMessageController
 {
@@ -21,19 +22,41 @@ class ContactMessageController
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email',
+            'phone_number' => 'required|string|max:20|regex:/^([0-9+\-\s()])+$/',
             'message' => 'required|string|min:10',
         ]);
+
+        // Validate WhatsApp number existence
+        try {
+            $checkResult = $this->evolutionApi->checkWhatsappNumbers($validated['phone_number']);
+
+            // Check if number exists on WhatsApp
+            if (!$checkResult || !$checkResult['exists']) {
+                return response()->json([
+                    'message' => 'Nomor WhatsApp tidak valid atau tidak terdaftar. Harap gunakan nomor yang terdaftar di WhatsApp.',
+                    'errors' => [
+                        'phone_number' => ['Nomor WhatsApp tidak ditemukan.'],
+                    ],
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal memvalidasi nomor WhatsApp. Silakan coba lagi.',
+                'errors' => [
+                    'phone_number' => ['Validasi nomor gagal.'],
+                ],
+            ], 422);
+        }
 
         // Create contact message
         $contact = ContactMessage::create($validated);
 
-        // Try to send WhatsApp notification
+        // Try to send WhatsApp notification to admin
         $about = AboutInfo::first();
         if ($about && $about->whatsapp_number) {
             $messageText = "📩 *Pesan Baru Masuk — Mealjun Website*\n\n" .
                 "*Dari:* {$validated['name']}\n" .
-                "*Email:* {$validated['email']}\n\n" .
+                "*WhatsApp:* {$validated['phone_number']}\n\n" .
                 "*Pesan:*\n" .
                 "{$validated['message']}\n\n" .
                 "_Balas pesan ini melalui panel admin._";
@@ -62,7 +85,7 @@ class ContactMessageController
         }
 
         // Apply search if value parameter is provided
-        $query = $this->applySearch($query, $request, ['name', 'email', 'message']);
+        $query = $this->applySearch($query, $request, ['name', 'phone_number', 'message']);
 
         // Apply ordering if provided, otherwise default
         if ($request->has('order') && $request->has('sort')) {
@@ -103,7 +126,7 @@ class ContactMessageController
     }
 
     /**
-     * Reply to contact message (admin)
+     * Reply to contact message (admin) - Auto sends to WhatsApp
      */
     public function reply(Request $request, string $id)
     {
@@ -111,8 +134,6 @@ class ContactMessageController
 
         $validated = $request->validate([
             'reply_message' => 'required|string|min:5',
-            'send_whatsapp_notif' => 'boolean',
-            'recipient_phone' => 'nullable|string|max:20',
         ]);
 
         // Update message
@@ -122,14 +143,20 @@ class ContactMessageController
             'is_read' => true,
         ]);
 
-        // Send WhatsApp notification if requested
-        if ($validated['send_whatsapp_notif'] && $validated['recipient_phone']) {
+        // Auto send WhatsApp notification to customer
+        try {
             $whatsappMessage = "Halo _{$message->name}_,\n\n" .
                 "Terima kasih telah menghubungi kami. Berikut balasan kami:\n\n" .
                 "{$validated['reply_message']}\n\n" .
                 "*— Tim Mealjun*";
 
-            $this->evolutionApi->notifyAdmin($validated['recipient_phone'], $whatsappMessage);
+            $this->evolutionApi->sendText($message->phone_number, $whatsappMessage);
+        } catch (\Exception $e) {
+            // Log error but don't fail the request - message is already saved
+            Log::error("Failed to send WhatsApp reply to {$message->phone_number}", [
+                'contact_id' => $message->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return response()->json($this->formatResource($message));
