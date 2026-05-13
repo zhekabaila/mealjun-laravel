@@ -9,7 +9,7 @@ class NvidiaKimiService
 {
     protected string $apiKey;
     protected string $apiUrl = 'https://integrate.api.nvidia.com/v1/chat/completions';
-    protected string $model = 'moonshotai/kimi-k2.5';
+    protected string $model = 'moonshotai/kimi-k2.6';
     protected int $timeout = 120; // Default 120 detik
 
     public function __construct()
@@ -56,7 +56,7 @@ class NvidiaKimiService
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
                 'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
+                'Accept' => 'application/json', // For non-stream responses
             ])->timeout($this->timeout)->post($this->apiUrl, [
                 'model' => $this->model,
                 'messages' => [
@@ -106,7 +106,8 @@ class NvidiaKimiService
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
                 'Content-Type' => 'application/json',
-            ])->post($this->apiUrl, [
+                'Accept' => 'application/json',
+            ])->timeout($this->timeout)->post($this->apiUrl, [
                 'model' => $this->model,
                 'messages' => [
                     [
